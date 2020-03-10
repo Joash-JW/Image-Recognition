@@ -16,7 +16,7 @@ def receiveImage():
     global img_count, graph, predictions, images
     content = request.data
     frame = pickle.loads(content) # get serialized data
-    cv2.imwrite("./raw/img"+str(img_count)+".jpg", frame)
+    cv2.imwrite("../raw/img"+str(img_count)+".jpg", frame)
     img_count += 1
     pred, img = run(frame, graph, cnn, img_count)
     predictions.append(pred)
