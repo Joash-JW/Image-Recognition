@@ -1,5 +1,5 @@
 from flask import Flask, request
-import socket, pickle, json, cv2, math
+import socket, pickle, json, cv2, math, threading
 from imgReg import run
 import tensorflow as tf
 from cnn import CNN
@@ -33,14 +33,26 @@ def finished():
     # print("done")
     #data = {303: [[1, 0, 0, 50, 50]], 400: [[1, 0, 0, 50, 50], [2, 50,50,50,50]]}
     # return ('', 204) # return a no content response
+    threading.Thread(target=plotImages).start()
     return json.dumps(predictions)
+
+def plotImages():
+    _, axs = plt.subplots(math.ceil(len(images)/3), 3, gridspec_kw = {'wspace':0, 'hspace':0}, figsize=(100,100))
+    for img, ax in zip(images, axs.flatten()):
+        ax.imshow(img)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+    plt.show()
+    import os
+    os._exit(1)
 
 # for debug
 def forDebug():
     global img_count, graph, predictions, images
     import os
-    for f in os.listdir("../old-mdp/newImages/raw8")[:5]:
-        frame = cv2.imread("../old-mdp/newImages/raw8/"+f)
+    #for f in os.listdir("../old-mdp/newImages/raw8")[:5]:
+    for f in os.listdir("../raw"):
+        frame = cv2.imread("../raw/"+f)
         pred, img = run(frame, graph, cnn, img_count)
         img_count+=1
         predictions.append(pred)
@@ -59,11 +71,11 @@ def debugEnd():
     plt.show()
 
 if __name__ == '__main__':
-    RPI = "192.168.16.16"
-    TEMP_PORT = 8125
     predictions = []
     images = []
 
+    # RPI = "192.168.16.16"
+    # TEMP_PORT = 8125
     # MY_IP = socket.gethostbyname(socket.getfqdn()) # get my IP address
     # print(MY_IP)
     # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,6 +87,7 @@ if __name__ == '__main__':
     #         print("Connection failed. Retrying...")
     #         continue
     # s.close() # close socket
-    # app.run(host='0.0.0.0', port=8123)
-    forDebug()
-    debugEnd()
+
+    app.run(host='0.0.0.0', port=8123)
+    #forDebug()
+    #debugEnd()

@@ -71,7 +71,7 @@ def run(frame, graph, model, count):
             cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
             results.append(class_mapping.get(pred[0][0]))
                 
-    #cv2.imwrite('./processed/p_img'+str(count)+'.jpg', frame)
+    cv2.imwrite('../processed/p_img'+str(count)+'.jpg', frame) # for debug
     if len(results) == 0:
         return [-1], None
     return results, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
