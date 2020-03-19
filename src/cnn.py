@@ -5,12 +5,18 @@ import joblib
 import numpy as np
 
 class CNN:
-    def __init__(self):
+    def __init__(self, version):
         self.dim = 64
-        self.channels = 1
-        self.model = self.getArchitecture()
-        self.model.load_weights("./cnn_weights.h5") # load saved weights
         self.lb = self.getLabelBinarizer()
+        self.version = version
+        if self.version == "gray":
+            self.channels = 1
+            self.model = self.getArchitecture()
+            self.model.load_weights("./cnn_weights_gray.h5") # load saved weights
+        else:
+            self.channels = 3
+            self.model = self.getArchitecture()
+            self.model.load_weights("./cnn_weights_colour.h5") # load saved weights
 
     # returns probability and class
     def predict(self, graph, frame):

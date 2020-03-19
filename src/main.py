@@ -1,44 +1,58 @@
 from flask import Flask, request
-import socket, pickle, json, cv2, math, threading
+import pickle, json, cv2, math, threading
 from imgReg import run
 import tensorflow as tf
 from cnn import CNN
 import matplotlib.pyplot as plt
 
 img_count = 0 # to assign image name
-cnn = CNN()
-graph = tf.get_default_graph()
+cnn = CNN("gray")
+graph = tf.get_default_graph() # to tackle thread issues
 app = Flask(__name__)
 
 # Endpoint to receive image data then localizes and classifies images
 @app.route('/', methods=['POST'])
 def receiveImage():
-    global img_count, graph, predictions, images
+    global img_count, graph, predictions, images, uniquePreds, areas
     content = request.data
     frame = pickle.loads(content) # get serialized data
     cv2.imwrite("../raw/img"+str(img_count)+".jpg", frame)
-    img_count += 1
-    pred, img = run(frame, graph, cnn, img_count)
+    pred, file, area, pos = run(frame, graph, cnn, img_count)
     predictions.append(pred)
-    if img is not None:
-        images.append(img)
+    if pred not in uniquePreds:
+        images.append(file)
+        uniquePreds.add(pred)
+        areas[pred] = [img_count, area, pos]
+        print("Detected", pred)
+    elif pred > 0:
+        temp_list = areas.get(pred)
+        if area > temp_list[1]:
+            areas[pred] = [img_count, area, pos]
+    img_count+=1
     return ('', 204) # return a no content response
 
 # Endpoint to send classification results to algo team
 @app.route('/end', methods=['GET'])
 def finished():
-    global predictions
-    # with open('data.json', 'w', encoding='utf-8') as f:
-    #     json.dump(content, f, ensure_ascii=False, indent=4)
-    # print("done")
-    #data = {303: [[1, 0, 0, 50, 50]], 400: [[1, 0, 0, 50, 50], [2, 50,50,50,50]]}
-    # return ('', 204) # return a no content response
-    threading.Thread(target=plotImages).start()
-    return json.dumps(predictions)
+    global predictions, images
+    positions = []
+    new_preds = [-1 for i in range(len(predictions))]
+    for pred, temp in areas.items():
+        new_preds[temp[0]] = pred
+    for pred in new_preds:
+        if pred > 0:
+            positions.append(areas.get(pred)[2])
+    print(json.dumps(new_preds)+";"+json.dumps(positions))
+    threading.Thread(target=plotImages, args=(images,)).start()
+    return json.dumps(new_preds)+";"+json.dumps(positions)
 
-def plotImages():
-    _, axs = plt.subplots(math.ceil(len(images)/3), 3, gridspec_kw = {'wspace':0, 'hspace':0}, figsize=(100,100))
-    for img, ax in zip(images, axs.flatten()):
+def plotImages(images):
+    toPlot = []
+    for file in images:
+        img = cv2.imread(file)
+        toPlot.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    _, axs = plt.subplots(math.ceil(len(toPlot)/3), 3, gridspec_kw = {'wspace':0, 'hspace':0}, figsize=(100,100))
+    for img, ax in zip(toPlot, axs.flatten()):
         ax.imshow(img)
         ax.set_xticklabels([])
         ax.set_yticklabels([])
@@ -48,23 +62,41 @@ def plotImages():
 
 # for debug
 def forDebug():
-    global img_count, graph, predictions, images
+    global img_count, graph, predictions, images, areas, uniquePreds
     import os
-    #for f in os.listdir("../old-mdp/newImages/raw8")[:5]:
-    for f in os.listdir("../raw"):
+    files = os.listdir("../raw/")
+    files = sorted(files, key=lambda x: int(x[3:-4]))
+    for f in files:
         frame = cv2.imread("../raw/"+f)
-        pred, img = run(frame, graph, cnn, img_count)
-        img_count+=1
+        pred, file, area, pos = run(frame, graph, cnn, img_count)
         predictions.append(pred)
-        if img is not None:
-            images.append(img)
+        if pred not in uniquePreds:
+            images.append(file)
+            uniquePreds.add(pred)
+            areas[pred] = [img_count, area, pos]
+            print("Detected", pred)
+        elif pred > 0:
+            temp_list = areas.get(pred)
+            if area > temp_list[1]:
+                areas[pred] = [img_count, area, pos]
+        img_count+=1
 
 # for debug
-def debugEnd():
-    global predictions, images
-    print(json.dumps(predictions))
-    _, axs = plt.subplots(math.ceil(len(images)/3), 3, gridspec_kw = {'wspace':0, 'hspace':0}, figsize=(100,100))
-    for img, ax in zip(images, axs.flatten()):
+def debugEnd(images):
+    positions = []
+    new_preds = [-1 for i in range(len(predictions))]
+    for pred, temp in areas.items():
+        new_preds[temp[0]] = pred
+    for pred in new_preds:
+        if pred > 0:
+            positions.append(areas.get(pred)[2])
+    print(json.dumps(new_preds)+";"+json.dumps(positions))
+    toPlot = []
+    for file in images:
+        img = cv2.imread(file)
+        toPlot.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    _, axs = plt.subplots(math.ceil(len(toPlot)/3), 3, gridspec_kw = {'wspace':0, 'hspace':0}, figsize=(100,100))
+    for img, ax in zip(toPlot, axs.flatten()):
         ax.imshow(img)
         ax.set_xticklabels([])
         ax.set_yticklabels([])
@@ -73,6 +105,12 @@ def debugEnd():
 if __name__ == '__main__':
     predictions = []
     images = []
+    areas = {}
+    uniquePreds = set([-1])
+    app.run(host='0.0.0.0', port=8123)
+
+    # forDebug()
+    # debugEnd(images)
 
     # RPI = "192.168.16.16"
     # TEMP_PORT = 8125
@@ -87,7 +125,3 @@ if __name__ == '__main__':
     #         print("Connection failed. Retrying...")
     #         continue
     # s.close() # close socket
-
-    app.run(host='0.0.0.0', port=8123)
-    #forDebug()
-    #debugEnd()
