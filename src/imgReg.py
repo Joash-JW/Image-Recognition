@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-img_bound = 300
+img_bound = 200
 class_mapping = {'up':1, 'down':2, 'right':3, 'left':4, 'circle':5, 'one':6, 'two':7,
                 'three':8, 'four':9, 'five':10, 'a':11, 'b':12, 'c':13, 'd':14, 'e':15} # mapping for class id
 

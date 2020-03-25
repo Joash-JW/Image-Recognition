@@ -1,12 +1,12 @@
 from flask import Flask, request
-import pickle, json, cv2, math, threading
+import pickle, json, cv2, math, threading, atexit
 from imgReg import run
 import tensorflow as tf
 from cnn import CNN
 import matplotlib.pyplot as plt
 
 img_count = 0 # to assign image name
-cnn = CNN("gray")
+cnn = CNN("colour")
 graph = tf.get_default_graph() # to tackle thread issues
 app = Flask(__name__)
 
@@ -107,6 +107,7 @@ if __name__ == '__main__':
     images = []
     areas = {}
     uniquePreds = set([-1])
+    atexit.register(debugEnd, images)
     app.run(host='0.0.0.0', port=8123)
 
     # forDebug()
