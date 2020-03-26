@@ -6,7 +6,7 @@ from cnn import CNN
 import matplotlib.pyplot as plt
 
 img_count = 0 # to assign image name
-cnn = CNN("gray")
+cnn = CNN("colour")
 graph = tf.get_default_graph() # to tackle thread issues
 app = Flask(__name__)
 
@@ -64,10 +64,10 @@ def plotImages(images):
 def forDebug():
     global img_count, graph, predictions, images, areas, uniquePreds
     import os
-    files = os.listdir("../raw8/")
+    files = os.listdir("../raw11/")
     files = sorted(files, key=lambda x: int(x[3:-4]))
     for f in files:
-        frame = cv2.imread("../raw8/"+f)
+        frame = cv2.imread("../raw11/"+f)
         pred, file, area, pos = run(frame, graph, cnn, img_count)
         predictions.append(pred)
         if pred not in uniquePreds:
