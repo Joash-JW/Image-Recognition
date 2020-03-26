@@ -1,12 +1,12 @@
 from flask import Flask, request
-import pickle, json, cv2, math, threading, atexit
+import pickle, json, cv2, math, threading
 from imgReg import run
 import tensorflow as tf
 from cnn import CNN
 import matplotlib.pyplot as plt
 
 img_count = 0 # to assign image name
-cnn = CNN("colour")
+cnn = CNN("gray")
 graph = tf.get_default_graph() # to tackle thread issues
 app = Flask(__name__)
 
@@ -64,10 +64,10 @@ def plotImages(images):
 def forDebug():
     global img_count, graph, predictions, images, areas, uniquePreds
     import os
-    files = os.listdir("../raw/")
+    files = os.listdir("../raw8/")
     files = sorted(files, key=lambda x: int(x[3:-4]))
     for f in files:
-        frame = cv2.imread("../raw/"+f)
+        frame = cv2.imread("../raw8/"+f)
         pred, file, area, pos = run(frame, graph, cnn, img_count)
         predictions.append(pred)
         if pred not in uniquePreds:
@@ -107,22 +107,7 @@ if __name__ == '__main__':
     images = []
     areas = {}
     uniquePreds = set([-1])
-    atexit.register(debugEnd, images)
     app.run(host='0.0.0.0', port=8123)
 
     # forDebug()
     # debugEnd(images)
-
-    # RPI = "192.168.16.16"
-    # TEMP_PORT = 8125
-    # MY_IP = socket.gethostbyname(socket.getfqdn()) # get my IP address
-    # print(MY_IP)
-    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # while True:
-    #     try:
-    #         s.connect((RPI, TEMP_PORT)) # to establish connection with RPI
-    #         break
-    #     except ConnectionRefusedError:
-    #         print("Connection failed. Retrying...")
-    #         continue
-    # s.close() # close socket

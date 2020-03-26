@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
 
-img_bound = 200
+img_bound = 240
+# THRESHOLD = 0.9999 # colour
+THRESHOLD = 0.999 # gray
+right_bound = 420
+left_bound = 150
 class_mapping = {'up':1, 'down':2, 'right':3, 'left':4, 'circle':5, 'one':6, 'two':7,
                 'three':8, 'four':9, 'five':10, 'a':11, 'b':12, 'c':13, 'd':14, 'e':15} # mapping for class id
 
@@ -9,9 +13,9 @@ def getBoundingBoxes(contours):
     boxes = []
     for contour in sorted(contours, key=cv2.contourArea, reverse=True):
         area = cv2.contourArea(contour)
-        if area < 800:
+        if area < 2000:
             break
-        elif area > 15000:
+        elif area > 12000:
             continue
         rect = cv2.boundingRect(contour)
         x, y, w, h = rect
@@ -23,8 +27,6 @@ def getBoundingBoxes(contours):
     return np.array(boxes)
 
 def run(frame, graph, model, count):
-    THRESHOLD = 0.999 # gray threshold
-    #THRESHOLD = 0.995 # colour threshold
     cropped = frame[img_bound:, :]
     gray = cv2.cvtColor(cropped, cv2.COLOR_RGB2GRAY)
     blurred = cv2.GaussianBlur(gray, (5,5), 0)
@@ -66,9 +68,9 @@ def run(frame, graph, model, count):
     filename = '../processed/p_img'+str(count)+'.jpg'
     cv2.imwrite(filename, frame) # for debug
     pos = None
-    if x < 200:
+    if x < left_bound:
         pos = "l"
-    elif x > 440:
+    elif x > right_bound:
         pos = "r"
     else:
         pos = "c"
