@@ -19,13 +19,14 @@ def receiveImage():
     cv2.imwrite("../raw/img"+str(img_count)+".jpg", frame)
     pred, file, area, pos = run(frame, graph, cnn, img_count)
     predictions.append(pred)
-    if pred not in uniquePreds:
+    if pred not in uniquePreds: # new prediction in this maze
         images.append(file)
         uniquePreds.add(pred)
         areas[pred] = [img_count, area, pos]
         print("Detected", pred)
-    elif pred > 0:
+    elif pred > 0: # prediction has been detected before
         temp_list = areas.get(pred)
+        # if this new prediction has a bigger bounding rectangle than the previous one
         if area > temp_list[1]:
             areas[pred] = [img_count, area, pos]
     img_count+=1
@@ -38,7 +39,7 @@ def finished():
     positions = []
     new_preds = [-1 for i in range(len(predictions))]
     for pred, temp in areas.items():
-        new_preds[temp[0]] = pred
+        new_preds[temp[0]] = pred # update the final prediction list
     for pred in new_preds:
         if pred > 0:
             positions.append(areas.get(pred)[2])
@@ -64,10 +65,10 @@ def plotImages(images):
 def forDebug():
     global img_count, graph, predictions, images, areas, uniquePreds
     import os
-    files = os.listdir("../raw11/")
+    files = os.listdir("../raw/")
     files = sorted(files, key=lambda x: int(x[3:-4]))
     for f in files:
-        frame = cv2.imread("../raw11/"+f)
+        frame = cv2.imread("../raw/"+f)
         pred, file, area, pos = run(frame, graph, cnn, img_count)
         predictions.append(pred)
         if pred not in uniquePreds:
@@ -107,7 +108,7 @@ if __name__ == '__main__':
     images = []
     areas = {}
     uniquePreds = set([-1])
-    app.run(host='0.0.0.0', port=8123)
+    #app.run(host='0.0.0.0', port=8123)
 
-    # forDebug()
-    # debugEnd(images)
+    forDebug()
+    debugEnd(images)
