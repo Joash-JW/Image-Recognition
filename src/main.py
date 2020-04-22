@@ -42,6 +42,7 @@ def finished():
         new_preds[temp[0]] = pred # update the final prediction list
     for pred in new_preds:
         if pred > 0:
+            # get the positions of the bounding rectangles
             positions.append(areas.get(pred)[2])
     print(json.dumps(new_preds)+";"+json.dumps(positions))
     threading.Thread(target=plotImages, args=(images,)).start()
@@ -108,7 +109,7 @@ if __name__ == '__main__':
     images = []
     areas = {}
     uniquePreds = set([-1])
-    #app.run(host='0.0.0.0', port=8123)
+    app.run(host='0.0.0.0', port=8123)
 
-    forDebug()
-    debugEnd(images)
+    # forDebug()
+    # debugEnd(images)
