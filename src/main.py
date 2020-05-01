@@ -66,10 +66,11 @@ def plotImages(images):
 def forDebug():
     global img_count, graph, predictions, images, areas, uniquePreds
     import os
-    files = os.listdir("../raw/")
+    location = "../raw/"
+    files = os.listdir(location)
     files = sorted(files, key=lambda x: int(x[3:-4]))
     for f in files:
-        frame = cv2.imread("../raw/"+f)
+        frame = cv2.imread(location+f)
         pred, file, area, pos = run(frame, graph, cnn, img_count)
         predictions.append(pred)
         if pred not in uniquePreds:
